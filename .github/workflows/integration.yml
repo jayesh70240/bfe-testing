@@ -31,7 +31,7 @@ jobs:
       - name: Checkout testing repository
         uses: actions/checkout@v4
         with:
-          repository: jayesh70240/bharat-filter-engine-testing
+          repository: jayesh70240/bfe-testing
           ref: main
           path: testing
           persist-credentials: false
