@@ -1,0 +1,84 @@
+name: Integration Tests
+
+on:
+  workflow_call:
+    inputs:
+      gem_repository:
+        required: true
+        type: string
+
+      gem_ref:
+        required: true
+        type: string
+
+    secrets:
+      REMOTE_POSTGRES_URL:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DATASET: popsql_marker
+      POPSQL_DATABASE_URL: ${{ secrets.REMOTE_POSTGRES_URL }}
+
+    steps:
+      - name: Checkout testing repository
+        uses: actions/checkout@v4
+        with:
+          repository: jayesh70240/bharat-filter-engine-testing
+          ref: main
+          path: testing
+          persist-credentials: false
+
+      - name: Checkout gem source
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.gem_repository }}
+          ref: ${{ inputs.gem_ref }}
+          path: gem-source
+          persist-credentials: false
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install testing dependencies
+        working-directory: testing
+        run: bundle install
+
+      - name: Build gem
+        working-directory: gem-source
+        run: |
+          GEMSPEC=$(find . -maxdepth 1 -name '*.gemspec' -print -quit)
+          test -n "$GEMSPEC"
+          gem build "$GEMSPEC" --output "$RUNNER_TEMP/bharat-filter-engine.gem"
+
+      - name: Install generated gem 
+        run: |
+          GEM_HOME="$GITHUB_WORKSPACE/vendor/gems"
+          mkdir -p "$GEM_HOME"
+
+          gem install "$RUNNER_TEMP/bharat-filter-engine.gem" \
+            --install-dir "$GEM_HOME" \
+            --ignore-dependencies \
+            --no-document
+
+          echo "GEM_HOME=$GEM_HOME" >> "$GITHUB_ENV"
+          echo "GEM_PATH=$GEM_HOME:$(gem env path)" >> "$GITHUB_ENV"
+
+      - name: Verify installed gem
+        working-directory: testing
+        run: ruby -e 'require "bharat_filter_engine"; puts "Gem loaded"'
+
+      - name: Run integration tests
+        working-directory: testing
+        run: |
+          ruby integration/database_test.rb
+          ruby integration/filter_engine_test.rb

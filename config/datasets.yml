@@ -1,0 +1,32 @@
+datasets:
+  popsql_marker:
+    enabled: true
+    database: postgresql
+    url_env: POPSQL_DATABASE_URL
+    expected_database: marker
+    expected_tables:
+      - users
+      - teams
+      - events
+      - tickets
+      - nps_responses
+
+  neon_employees:
+    enabled: false
+    database: postgresql
+    url_env: NEON_DATABASE_URL
+    expected_tables:
+      - employees
+      - departments
+      - dept_emp
+      - dept_manager
+      - salaries
+      - titles
+
+  clickhouse_sample:
+    enabled: false
+    database: clickhouse
+    url_env: CLICKHOUSE_DATABASE_URL
+    expected_tables:
+      - users
+      - events

@@ -1,0 +1,15 @@
+databases:
+  postgresql:
+    enabled: true
+    adapter_class: Database::Adapters::PostgreSQL
+    adapter_file: postgresql
+
+  mysql:
+    enabled: false
+    adapter_class: Database::Adapters::MySQL
+    adapter_file: mysql
+
+  clickhouse:
+    enabled: false
+    adapter_class: Database::Adapters::ClickHouse
+    adapter_file: clickhouse
